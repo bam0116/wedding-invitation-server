@@ -1,7 +1,7 @@
 package env
 
 import (
-	"fmt"
+	//"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -24,6 +24,6 @@ func init() {
 
 	AllowOrigin = os.Getenv("ALLOW_ORIGIN")
 	if AllowOrigin == "" {
-		AllowOrigin = "https://bam0116.github.io" // 기본 CORS 허용 origin
+		AllowOrigin = "https://bam0116.github.io/wedding-invitation" // 기본 CORS 허용 origin
 	}
 }
