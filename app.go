@@ -23,29 +23,18 @@ func main() {
 	sqldb.SetDb(db)
 
 	mux := http.NewServeMux()
+	mux.Handle("/api/guestbook", new(httphandler.GuestbookHandler))
+	mux.Handle("/api/attendance", new(httphandler.AttendanceHandler))
 
-	mux.HandleFunc("/api/guestbook", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		new(httphandler.GuestbookHandler).ServeHTTP(w, r)
-	})
-
-	mux.HandleFunc("/api/attendance", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		new(httphandler.AttendanceHandler).ServeHTTP(w, r)
-	})
-
-	handler := cors.New(cors.Options{
-		AllowedOrigins:   []string{env.AllowOrigin},
-		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodOptions},
+	// CORS 미들웨어
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{env.AllowOrigin}, // .env에 설정한 https://bam0116.github.io
+		AllowedMethods:   []string{"GET", "POST", "PUT", "OPTIONS"},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
-	}).Handler(mux)
+	})
+
+	handler := c.Handler(mux)
 
 	port := os.Getenv("PORT")
 	if port == "" {
