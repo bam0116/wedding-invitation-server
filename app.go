@@ -21,20 +21,33 @@ func main() {
 	sqldb.SetDb(db)
 
 	mux := http.NewServeMux()
-	mux.Handle("/api/guestbook", new(httphandler.GuestbookHandler))
-	mux.Handle("/api/attendance", new(httphandler.AttendanceHandler))
 
+	// Guestbook 핸들러 (OPTIONS 처리 포함)
+	mux.HandleFunc("/api/guestbook", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		new(httphandler.GuestbookHandler).ServeHTTP(w, r)
+	})
+
+	// Attendance 핸들러 (OPTIONS 처리 포함)
+	mux.HandleFunc("/api/attendance", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		new(httphandler.AttendanceHandler).ServeHTTP(w, r)
+	})
+
+	// CORS 설정
 	corHandler := cors.New(cors.Options{
-    AllowedOrigins:   []string{env.AllowOrigin},
-    AllowedMethods:   []string{
-        http.MethodGet,
-        http.MethodPost,
-        http.MethodPut,
-        http.MethodOptions, // ← 이거 추가
-    },
-    AllowedHeaders:   []string{"*"}, // 모든 헤더 허용
-    AllowCredentials: true,
-})
+		AllowedOrigins:   []string{env.AllowOrigin}, // .env에 https://bam0116.github.io
+		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodOptions},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: true,
+	})
+
 	handler := corHandler.Handler(mux)
 
 	http.ListenAndServe(":8080", handler)

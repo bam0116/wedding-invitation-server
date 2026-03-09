@@ -13,6 +13,12 @@ type AttendanceHandler struct {
 }
 
 func (h *AttendanceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// OPTIONS 요청 처리
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	if r.Method == http.MethodPost {
 		decoder := json.NewDecoder(r.Body)
 		var attendance types.AttendanceCreate
@@ -23,14 +29,7 @@ func (h *AttendanceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("InternalServerError"))
-			return
-		}
-
 		err = sqldb.CreateAttendance(attendance.Side, attendance.Name, attendance.Meal, attendance.Count)
-
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte("InternalServerError"))

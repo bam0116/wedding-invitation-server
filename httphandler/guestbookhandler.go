@@ -14,8 +14,13 @@ type GuestbookHandler struct {
 }
 
 func (h *GuestbookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodGet {
+	// OPTIONS 요청 처리
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 
+	if r.Method == http.MethodGet {
 		offsetQ := r.URL.Query().Get("offset")
 		limitQ := r.URL.Query().Get("limit")
 
@@ -33,7 +38,6 @@ func (h *GuestbookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		guestbook, err := sqldb.GetGuestbook(offset, limit)
-
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte("Internal Server Error"))
@@ -41,7 +45,6 @@ func (h *GuestbookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		pbytes, err := json.Marshal(guestbook)
-
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte("Internal Server Error"))
@@ -50,6 +53,7 @@ func (h *GuestbookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(pbytes)
+
 	} else if r.Method == http.MethodPost {
 		decoder := json.NewDecoder(r.Body)
 		var post types.GuestbookPostForCreate
@@ -60,14 +64,7 @@ func (h *GuestbookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("InternalServerError"))
-			return
-		}
-
 		err = sqldb.CreateGuestbookPost(post.Name, post.Content, post.Password)
-
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte("InternalServerError"))
@@ -75,6 +72,7 @@ func (h *GuestbookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
+
 	} else if r.Method == http.MethodPut {
 		decoder := json.NewDecoder(r.Body)
 		var post types.GuestbookPostForDelete
@@ -86,7 +84,6 @@ func (h *GuestbookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		err = sqldb.DeleteGuestbookPost(post.Id, post.Password)
-
 		if err != nil {
 			if err.Error() == "INCORRECT_PASSWORD" {
 				w.WriteHeader(http.StatusForbidden)
