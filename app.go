@@ -2,7 +2,9 @@ package main
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
+	"os"
 
 	"github.com/bam0116/wedding-invitation-server/env"
 	"github.com/bam0116/wedding-invitation-server/httphandler"
@@ -14,7 +16,7 @@ import (
 func main() {
 	db, err := sql.Open("sqlite3", "./sql.db")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer db.Close()
 
@@ -22,7 +24,6 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	// Guestbook 핸들러 (OPTIONS 처리 포함)
 	mux.HandleFunc("/api/guestbook", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
@@ -31,7 +32,6 @@ func main() {
 		new(httphandler.GuestbookHandler).ServeHTTP(w, r)
 	})
 
-	// Attendance 핸들러 (OPTIONS 처리 포함)
 	mux.HandleFunc("/api/attendance", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
@@ -40,15 +40,18 @@ func main() {
 		new(httphandler.AttendanceHandler).ServeHTTP(w, r)
 	})
 
-	// CORS 설정
-	corHandler := cors.New(cors.Options{
-		AllowedOrigins:   []string{env.AllowOrigin}, // .env에 https://bam0116.github.io
+	handler := cors.New(cors.Options{
+		AllowedOrigins:   []string{env.AllowOrigin},
 		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodOptions},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
-	})
+	}).Handler(mux)
 
-	handler := corHandler.Handler(mux)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 
-	http.ListenAndServe(":8080", handler)
+	log.Printf("Server running on port %s", port)
+	log.Fatal(http.ListenAndServe(":"+port, handler))
 }
