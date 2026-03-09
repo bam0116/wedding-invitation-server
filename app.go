@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/bam0116/wedding-invitation-server/env"
+	//"github.com/bam0116/wedding-invitation-server/env"
 	"github.com/bam0116/wedding-invitation-server/httphandler"
 	"github.com/bam0116/wedding-invitation-server/sqldb"
 	_ "github.com/mattn/go-sqlite3"
