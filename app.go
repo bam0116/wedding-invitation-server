@@ -28,7 +28,7 @@ func main() {
 
 	// CORS 설정
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"https://bam0116.github.io"},
+		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "OPTIONS"},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
