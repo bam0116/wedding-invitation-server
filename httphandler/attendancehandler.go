@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/bam0116/wedding-invitation-server/env"
 	"github.com/bam0116/wedding-invitation-server/sqldb"
 	"github.com/bam0116/wedding-invitation-server/types"
 )
@@ -13,32 +14,31 @@ type AttendanceHandler struct {
 }
 
 func (h *AttendanceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// OPTIONS 요청 처리
+	// CORS 헤더
+	w.Header().Set("Access-Control-Allow-Origin", env.AllowOrigin)
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
 	if r.Method == http.MethodPost {
-		decoder := json.NewDecoder(r.Body)
 		var attendance types.AttendanceCreate
-		err := decoder.Decode(&attendance)
-		if err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&attendance); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("BadRequest"))
 			return
 		}
 
-		err = sqldb.CreateAttendance(attendance.Side, attendance.Name, attendance.Meal, attendance.Count)
-		if err != nil {
+		if err := sqldb.CreateAttendance(attendance.Side, attendance.Name, attendance.Meal, attendance.Count); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("InternalServerError"))
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
 	} else {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		w.Write([]byte("Method Not Allowed"))
 	}
 }

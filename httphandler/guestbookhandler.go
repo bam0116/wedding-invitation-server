@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/bam0116/wedding-invitation-server/env"
 	"github.com/bam0116/wedding-invitation-server/sqldb"
 	"github.com/bam0116/wedding-invitation-server/types"
 )
@@ -14,90 +15,72 @@ type GuestbookHandler struct {
 }
 
 func (h *GuestbookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// OPTIONS 요청 처리
+	// 모든 요청에 CORS 헤더 추가
+	w.Header().Set("Access-Control-Allow-Origin", env.AllowOrigin)
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
-	if r.Method == http.MethodGet {
-		offsetQ := r.URL.Query().Get("offset")
-		limitQ := r.URL.Query().Get("limit")
-
-		offset, err := strconv.Atoi(offsetQ)
+	switch r.Method {
+	case http.MethodGet:
+		offset, err := strconv.Atoi(r.URL.Query().Get("offset"))
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("Bad Request"))
 			return
 		}
-		limit, err := strconv.Atoi(limitQ)
+		limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("Bad Request"))
 			return
 		}
 
 		guestbook, err := sqldb.GetGuestbook(offset, limit)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Internal Server Error"))
-			return
-		}
-
-		pbytes, err := json.Marshal(guestbook)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Internal Server Error"))
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(pbytes)
+		json.NewEncoder(w).Encode(guestbook)
 
-	} else if r.Method == http.MethodPost {
-		decoder := json.NewDecoder(r.Body)
+	case http.MethodPost:
 		var post types.GuestbookPostForCreate
-		err := decoder.Decode(&post)
-		if err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("BadRequest"))
 			return
 		}
 
-		err = sqldb.CreateGuestbookPost(post.Name, post.Content, post.Password)
-		if err != nil {
+		if err := sqldb.CreateGuestbookPost(post.Name, post.Content, post.Password); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("InternalServerError"))
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
 
-	} else if r.Method == http.MethodPut {
-		decoder := json.NewDecoder(r.Body)
+	case http.MethodPut:
 		var post types.GuestbookPostForDelete
-		err := decoder.Decode(&post)
-		if err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("BadRequest"))
 			return
 		}
 
-		err = sqldb.DeleteGuestbookPost(post.Id, post.Password)
-		if err != nil {
+		if err := sqldb.DeleteGuestbookPost(post.Id, post.Password); err != nil {
 			if err.Error() == "INCORRECT_PASSWORD" {
 				w.WriteHeader(http.StatusForbidden)
-				w.Write([]byte("Forbidden"))
 			} else {
 				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte("InternalServerError"))
 			}
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-	} else {
+		w.WriteHeader(http.StatusOK)
+
+	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		w.Write([]byte("Method Not Allowed"))
 	}
 }

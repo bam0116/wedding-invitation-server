@@ -26,15 +26,13 @@ func main() {
 	mux.Handle("/api/guestbook", new(httphandler.GuestbookHandler))
 	mux.Handle("/api/attendance", new(httphandler.AttendanceHandler))
 
-	// CORS 미들웨어
+	// CORS 설정
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{env.AllowOrigin}, // .env에 설정한 https://bam0116.github.io
+		AllowedOrigins:   []string{env.AllowOrigin},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "OPTIONS"},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
 	})
-
-	handler := c.Handler(mux)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -42,5 +40,5 @@ func main() {
 	}
 
 	log.Printf("Server running on port %s", port)
-	log.Fatal(http.ListenAndServe(":"+port, handler))
+	log.Fatal(http.ListenAndServe(":"+port, c.Handler(mux)))
 }
