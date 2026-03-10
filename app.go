@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	//"github.com/bam0116/wedding-invitation-server/env"
+	"github.com/bam0116/wedding-invitation-server/env"
 	"github.com/bam0116/wedding-invitation-server/httphandler"
 	"github.com/bam0116/wedding-invitation-server/sqldb"
 	_ "github.com/mattn/go-sqlite3"
@@ -16,7 +16,7 @@ import (
 func main() {
 	db, err := sql.Open("sqlite3", "./sql.db")
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	defer db.Close()
 
@@ -26,19 +26,13 @@ func main() {
 	mux.Handle("/api/guestbook", new(httphandler.GuestbookHandler))
 	mux.Handle("/api/attendance", new(httphandler.AttendanceHandler))
 
-	// CORS 설정
-	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "OPTIONS"},
-		AllowedHeaders:   []string{"*"},
-		AllowCredentials: false,
+	corHandler := cors.New(cors.Options{
+		AllowedOrigins:   []string{env.AllowOrigin},
+		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPut},
+		AllowCredentials: true,
 	})
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+	handler := corHandler.Handler(mux)
 
-	log.Printf("Server running on port %s", port)
-	log.Fatal(http.ListenAndServe(":"+port, c.Handler(mux)))
+	http.ListenAndServe(":8080", handler)
 }

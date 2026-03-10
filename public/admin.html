@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>하객 명단 확인</title>
+</head>
+<body>
+<h1>하객 명단</h1>
+<button id="downloadCsv">CSV 다운로드</button>
+<table id="guestbook" border="1">
+  <tr>
+    <th>이름</th>
+    <th>측</th>
+    <th>식사</th>
+    <th>인원</th>
+    <th>등록일</th>
+  </tr>
+</table>
+
+<script>
+const table = document.getElementById('guestbook');
+
+async function loadAttendance() {
+  const res = await fetch('https://wedding-invitation-server-yd26.onrender.com/api/guestbook');
+  const data = await res.json();
+
+  data.forEach(a => {
+    const row = table.insertRow();
+    row.insertCell(0).innerText = a.name;
+    row.insertCell(1).innerText = a.side;
+    row.insertCell(2).innerText = a.meal;
+    row.insertCell(3).innerText = a.count;
+    row.insertCell(4).innerText = a.created_at;
+  });
+}
+
+// CSV 다운로드
+document.getElementById('downloadCsv').addEventListener('click', () => {
+  let csv = '이름,측,식사,인원,등록일\n';
+  const rows = table.querySelectorAll('tr');
+  for (let i = 1; i < rows.length; i++) {
+    const cols = rows[i].querySelectorAll('td');
+    csv += Array.from(cols).map(td => `"${td.innerText}"`).join(',') + '\n';
+  }
+
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'attendance.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+loadAttendance();
+</script>
+</body>
+</html>

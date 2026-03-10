@@ -41,4 +41,27 @@ func (h *AttendanceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
+
+	if r.Method == http.MethodGet {
+    rows, err := sqldb.GetDb().Query("SELECT id, side, name, meal, count, created_at FROM attendance ORDER BY created_at DESC")
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
+
+    var attendances []types.Attendance
+    for rows.Next() {
+        var a types.Attendance
+        if err := rows.Scan(&a.ID, &a.Side, &a.Name, &a.Meal, &a.Count, &a.CreatedAt); err != nil {
+            w.WriteHeader(http.StatusInternalServerError)
+            return
+        }
+        attendances = append(attendances, a)
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(attendances)
+    return
+	}
 }
