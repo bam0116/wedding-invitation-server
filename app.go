@@ -25,6 +25,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("/api/guestbook", new(httphandler.GuestbookHandler))
 	mux.Handle("/api/attendance", new(httphandler.AttendanceHandler))
+	mux.Handle("/", http.FileServer(http.Dir("public")))
 
 	corHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{env.AllowOrigin},
