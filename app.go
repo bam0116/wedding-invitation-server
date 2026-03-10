@@ -2,9 +2,9 @@ package main
 
 import (
 	"database/sql"
-	"log"
+	//"log"
 	"net/http"
-	"os"
+	//"os"
 
 	"github.com/bam0116/wedding-invitation-server/env"
 	"github.com/bam0116/wedding-invitation-server/httphandler"
