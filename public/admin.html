@@ -21,7 +21,7 @@
 const table = document.getElementById('guestbook');
 
 async function loadAttendance() {
-  const res = await fetch('https://wedding-invitation-server-yd26.onrender.com/api/guestbook');
+  const res = await fetch('https://wedding-invitation-server-yd26.onrender.com/api/attendance');
   const data = await res.json();
 
   data.forEach(a => {
